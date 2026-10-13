@@ -129,7 +129,33 @@ def dijkstra(
     considered_states : int
         Number of states removed from the priority queue.
     """
-    ...
+    insertion_order = count()
+    frontier = [(0, next(insertion_order), start)]
+    costs = {start: 0}
+    parents = {start: None}
+    considered_states = 0
+
+    while frontier:
+        current_cost, _, current = heapq.heappop(frontier)
+        considered_states += 1
+
+        if current_cost != costs[current]:
+            continue
+
+        if current == goal:
+            return reconstruct_path(parents, goal), considered_states
+
+        for next_state in successors(game_map, current):
+            new_cost = current_cost + movement_cost(game_map, next_state)
+            if next_state not in costs or new_cost < costs[next_state]:
+                costs[next_state] = new_cost
+                parents[next_state] = current
+
+                heapq.heappush(
+                    frontier, (new_cost, next(insertion_order), next_state)
+                )
+
+    raise RuntimeError("No path exists between the start and the goal.")
 
 
 def a_star(
@@ -148,4 +174,31 @@ def a_star(
     considered_states : int
         Number of states removed from the priority queue.
     """
-    ...
+    insertion_order = count()
+    frontier = [(manhattan_distance(start, goal), next(insertion_order), 0, start)]
+    costs = {start: 0}
+    parents = {start: None}
+    considered_states = 0
+
+    while frontier:
+        _, _, current_cost, current = heapq.heappop(frontier)
+        considered_states += 1
+
+        if current_cost != costs[current]:
+            continue
+
+        if current == goal:
+            return reconstruct_path(parents, goal), considered_states
+
+        for next_state in successors(game_map, current):
+            new_cost = current_cost + movement_cost(game_map, next_state)
+            if next_state not in costs or new_cost < costs[next_state]:
+                costs[next_state] = new_cost
+                parents[next_state] = current
+                priority = new_cost + manhattan_distance(next_state, goal)
+                heapq.heappush(
+                    frontier,
+                    (priority, next(insertion_order), new_cost, next_state),
+                )
+
+    raise RuntimeError("No path exists between the start and the goal.")
